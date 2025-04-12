@@ -1,17 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const auth = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 
 const app = express();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/transactions', transactionRoutes);
+app.use('/api/transactions', auth, transactionRoutes);
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI)

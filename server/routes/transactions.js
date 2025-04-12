@@ -1,29 +1,43 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
 const Transaction = require('../models/Transaction');
 
-// Create transaction
-router.post('/', auth, async (req, res) => {
+// POST a new transaction
+router.post('/', async (req, res) => {
+  console.log('POST /transactions hit');
+  console.log('Body:', req.body);
+  console.log('User:', req.user);
+
+  const { type, category, amount, description } = req.body;
+
+  if (!type || !category || !amount) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
   try {
     const transaction = new Transaction({
-      ...req.body,
-      user: req.user._id
+      type,
+      category,
+      amount,
+      description,
+      user: req.user.id,
     });
-    await transaction.save();
-    res.status(201).send(transaction);
+
+    const saved = await transaction.save();
+    return res.status(201).json(saved);
   } catch (err) {
-    res.status(400).send(err);
+    console.error('Save error:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
-// Get all transactions
-router.get('/', auth, async (req, res) => {
+// GET all transactions
+router.get('/', async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user._id });
-    res.send(transactions);
+    const transactions = await Transaction.find({ user: req.user.id }).sort({ date: -1 });
+    res.json(transactions);
   } catch (err) {
-    res.status(500).send();
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
